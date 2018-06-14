@@ -42,14 +42,14 @@ def strategy_query_least_confident(obj, batch_size):
     *predict_proba* callback, which was passed to *__init__*.
     """
     try:
-        pred = obj.predict_proba_(obj.cls, obj.get_unlabeled_x())
+        pred = obj.exec_cls_fun(obj.predict_proba_, obj.get_unlabeled_x())
     except:
-        print('can not predict probability, query randomly')
+        print('can not predict probability: query randomly')
         return strategy_query_random(obj, batch_size)
 
     pred = convert_probas_to_max_cls_proba(pred)
     if np.array(pred).all() == 0:
-        print('having no prototypes in, so choosing random samples first')
+        print('can not predict probabilities, it seems there was something wrong: query randomly')
         return strategy_query_random(batch_size)
     else:
         inds = np.argsort(pred)[:batch_size]
@@ -58,22 +58,23 @@ def strategy_query_least_confident(obj, batch_size):
 
 def strategy_query_lower_percentile_randomly(obj,batch_size,lower_percentile_size=0.2):
     """active querying which queries a random subset of the x% percentile of least confident samples"""
-
+    # try to predict the accuracy of the unlabeled set for uncertainty sampling
     try:
         pred = obj.exec_cls_fun(obj.predict_proba_,obj.get_unlabeled_x())
+    # if it is not possible (because e.g. the classifier was not trained yet), then do a random sampling
     except:
+        print('can not predict probability: query randomly')
         return strategy_query_random(obj,batch_size)
-
+    # we only want the maximum class probability of all samples
     pred = helper.convert_probas_to_max_cls_proba(pred)
-
     if np.array(pred).all() == 0:
-        print('having no prototypes in, so choosing random samples first')
+        print('can not predict probabilities, it seems there was something wrong: query randomly')
         inds = np.random.choice(len(pred), batch_size)
     else:
         percentile_size = int(max(len(pred)*lower_percentile_size,batch_size))
         inds = np.argsort(pred)[:percentile_size]
         try:
-            inds = np.random.choice(inds, batch_size)  # ,replace=False)
+            inds = np.random.choice(inds, batch_size, replace=False)
         except Exception:
             return []
     return inds

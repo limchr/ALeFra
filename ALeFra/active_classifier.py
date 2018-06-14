@@ -327,7 +327,7 @@ class active_classifier:
         """
         plt.cla()
         plt.ion()
-
+        ax = plt.gca()
 
         # do dimension reduction
         if self.x_.shape[1] > 2:
@@ -344,16 +344,15 @@ class active_classifier:
                     self.mds = MDS(n_components=2, metric=True, n_init=4, max_iter=300, verbose=0, eps=0.001,
                                    n_jobs=1, random_state=None, dissimilarity='euclidean')
                     self.x_visu = self.mds.fit_transform(self.x_, self.y_)
-
             ux, uy, lx, ly = self.x_visu[self.unlabeled_i_], self.get_unlabeled_y(), self.x_visu[self.labeled_i_], self.get_labeled_y()
         else:
             ux, uy, lx, ly = self.get_unlabeled_x(), self.get_unlabeled_y(), self.get_labeled_x(), self.get_labeled_y()
 
         for x, y in zip(ux,uy):
             plt.scatter(x[0], x[1], marker=markers[y], color='grey')  # some_colors[int(y)]
-        for x, y in zip(lx,ly):
+        for i, (x, y) in enumerate(zip(lx,ly)):
             plt.scatter(x[0], x[1], marker=markers[y], color=colors[y])  # some_colors[int(y)]
-
+            ax.annotate(i, (x[0],x[1]))
         try:
             plt.title('Feature Visualization. Train-score: %5f, test-score: %5f' % (self.train_scores_whole[-1],self.test_scores[-1]))
         except:
