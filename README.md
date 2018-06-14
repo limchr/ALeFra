@@ -20,7 +20,7 @@ Alternatively you can just copy the active_classifier.py and active_strategies.p
 Documentation can be found [here](https://htmlpreview.github.io/?https://github.com/limchr/ALeFra/blob/master/active_classifier.m.html). 
 
 ## Example usage
-Full example files are under the [examples sub-directory](https://github.com/limchr/ALeFra/tree/master/examples).
+Full example files are under the [examples sub-directory](https://github.com/limchr/ALeFra/tree/master/examples). For a quick look, try out test_toy.py which should run out of the box:
 
 ### Load some data
 
@@ -196,7 +196,7 @@ This produces an accuracy plot with the labeled and unlabeled pool (and combined
 ### Visualizing image data
 A big focus of our own work is training active learning methods on image data. If images are passed to the init_log method and the constructor, ALeFra creates collage images after each batch. In this collage images, the queryied samples are visualized and also the (in that particular batch) new right or wrong classified samples and the samples which label did changed. Take a look at the example test_digits
 
-![Training with image data](./imgs/image_data.png "Training with image data")
+![Training with image data](./imgs/image_dataset.png "Training with image data")
 
 ### Train until empty unlabeled pool
 If the training should be continued until the unlabeled pool is empty this can be done:
@@ -213,8 +213,8 @@ while True:
 ```
 
 ## Literature
-[Christian Limberg, Heiko Wersing, Helge Ritter (2018) 
-Efficient Accuracy Estimation for Instance-Based Incremental Active Learning 
+[Christian Limberg, Heiko Wersing, Helge Ritter (2018)<br>
+Efficient Accuracy Estimation for Instance-Based Incremental Active Learning<br>
 European Symposium on Artificial Neural Networks (ESANN)](http://www.honda-ri.de/pubs/pdf/2125.pdf)
 
 ## License
