@@ -1,5 +1,7 @@
 # ALeFra - Active Learning Framework
 
+[//]: # (Create documentation with: PYTHONPATH=/home/climberg/src/python/alefra/:$PYTHONPATH pdoc --html ALeFra/active_classifier.py)
+
 ## Features
 - Convert any classifier (online and offline) in an active trainable classifier
 - Make active training easy by a single loop
