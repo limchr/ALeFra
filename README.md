@@ -220,11 +220,10 @@ Efficient Accuracy Estimation for Instance-Based Incremental Active Learning<br>
 European Symposium on Artificial Neural Networks (ESANN)](http://www.honda-ri.de/pubs/pdf/2125.pdf)
 
 ## License
-Copyright (C) 2018
-Christian Limberg
-Centre of Excellence Cognitive Interaction Technology (CITEC)
-Bielefeld University
-
+Copyright (C) 2018<br>
+Christian Limberg<br>
+Centre of Excellence Cognitive Interaction Technology (CITEC)<br>
+Bielefeld University<br><br>
 
 Redistribution and use in source and binary forms, with or without modification,
 are permitted provided that the following conditions are met:
