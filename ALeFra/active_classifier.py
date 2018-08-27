@@ -53,6 +53,8 @@ class active_classifier:
                  incremtenal_trainable=True,
                  classifier_args=(),
                  classifier_kwargs=dict(),
+                 fit_args=(),
+                 fit_kwargs={}
                  ):
         """Initializes an active classifier from base classifier.
 
@@ -76,6 +78,8 @@ class active_classifier:
         self.classifier_ = classifier
         self.classifier_args = classifier_args
         self.classifier_kwargs = classifier_kwargs
+        self.fit_args = fit_args
+        self.fit_kwargs = fit_kwargs
         self.cls = self.classifier_(*self.classifier_args,**self.classifier_kwargs)
 
         self.fit_ = fit_method if fit_method is not None else self.classifier_.fit
@@ -220,29 +224,44 @@ class active_classifier:
         """Use this function to train the classifier. The functions calls the querying function to query the best samples,
         then those samples gets labeled automatically and the labeled and unlabeled pool are adjusted.
         """
+
+        i = self.query(batch_size)
+        if len(i) == 0:
+            print('no sample queried')
+            return False
+
+        indices = self.fit_unlabeled_indices(i)
+        return indices
+
+    def query(self,batch_size):
+        """calls the querying method and returns the next to be labeled samples."""
         if len(self.unlabeled_i_) == 0:
             print('there is no sample in unlabeled pool to train')
             return False
         i = self.query_strategy(self,batch_size,*self.query_args,**self.query_kwargs)
-        if len(i) == 0:
-            print('no sample queried')
-            return False
+        return i
+
+    def fit_unlabeled_indices(self,i):
+        """Fit classifier either incremental or from scratch with passed indices from unlabeled pool. Returns indices of whole data set of newly labeled samples."""
         if self.incremental_trainable:
-            self.fit_(self.cls,self.get_unlabeled_x()[i],self.get_unlabeled_y()[i])
+            self.fit_(self.cls,self.get_unlabeled_x()[i],self.get_unlabeled_y()[i],*self.fit_args,**self.fit_kwargs)
             indices = self.update_labels_(i)
         else:
             """for classifiers that are not able to train incrementally/online, reinitialize a new classifier and train from scratch with all yet labeled samples"""
             indices = self.update_labels_(i)
             self.cls = self.classifier_(*self.classifier_args, **self.classifier_kwargs)
             try:
-                self.fit_(self.cls,self.get_labeled_x(),self.get_labeled_y())
+                self.fit_(self.cls,self.get_labeled_x(),self.get_labeled_y(), *self.fit_args, **self.fit_kwargs)
             except:
                 print('unable to train, maybe not enough labeled samples')
                 # print(traceback.format_exc())
 
+        # this is maybe a bit dirty
         self.last_queried_i_ = indices
         self.epoch_counter_ += 1
+
         return indices
+
 
 
     def evaluate(self,score_train_set=True,log_collage_image=True,log_single_images=True):
