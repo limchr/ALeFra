@@ -35,11 +35,12 @@ import ALeFra.helper as helper
 import numpy as np
 import random
 
-from sklearn.linear_model import SGDClassifier
 from PracticalMachineLearning.glvq import glvq
 from common.classification import get_max_class_probas
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import SGDClassifier
+import math
 
 def strategy_query_random(obj, batch_size):
     return random.sample(range(len(obj.unlabeled_i_)), batch_size)
@@ -76,7 +77,7 @@ def strategy_query_by_committee(obj, batch_size):
             self.svm = SVC(kernel='linear', probability=True)
             # self.perceptron = SGDClassifier(loss='perceptron')
             self.logistic_regression = SGDClassifier(loss='log')
-            self.generalized_lvq = glvq()
+            # self.generalized_lvq = glvq()
             # self.xgb = XGBClassifier()
 
         def fit(self, x, y):
@@ -89,8 +90,11 @@ def strategy_query_by_committee(obj, batch_size):
 
             try:
                 #train incremental models
-                self.logistic_regression.partial_fit(x, y, classes=self.unique_classes)
-                self.generalized_lvq.fit(x, y)
+                # self.logistic_regression.partial_fit(x, y, classes=self.unique_classes)
+                # self.generalized_lvq.fit(x, y)
+
+                self.logistic_regression = SGDClassifier(loss='log')
+                self.logistic_regression.fit(self.x,self.y)
 
                 #train offline models
                 self.svm = SVC(kernel='linear', probability=True)
@@ -102,36 +106,58 @@ def strategy_query_by_committee(obj, batch_size):
             except:
                 print('ERROR: can not train qbc classifiers')
 
-        def query(self, unlabeled_pool,batch_size):
+        def _vote_disagreement(self, votes):
+            ret = []
+            for candidate in votes:
+                ret.append(0.0)
+                lab_count = {}
+                for lab in candidate:
+                    lab_count[lab] = lab_count.setdefault(lab, 0) + 1
+                # Using vote entropy to measure disagreement
+                for lab in lab_count.keys():
+                    ret[-1] -= lab_count[lab] / votes.shape[1] * \
+                               math.log(float(lab_count[lab]) / votes.shape[1])
+            return ret
+
+        def _kl_divergence_disagreement(self, proba):
+            n_students = np.shape(proba)[1]
+            consensus = np.mean(proba, axis=1)  # shape=(n_samples, n_class)
+            # average probability of each class across all students
+            consensus = np.tile(consensus, (n_students, 1, 1)).transpose(1, 0, 2)
+            kl = np.sum(proba * np.log(proba / consensus), axis=2)
+            return np.mean(kl, axis=1)
+
+        def query(self, unlabeled_pool, batch_size):
+            return self.query_by_vote(unlabeled_pool,batch_size)
+        def query_by_vote(self, unlabeled_pool, batch_size):
             try:
-                probas = np.zeros((0,len(unlabeled_pool)))
-                probas_svm = self.svm.predict_proba(unlabeled_pool)
-                probas_svm = get_max_class_probas(probas_svm)
-
-                probas_tree = self.tree.predict_proba(unlabeled_pool)
-                probas_tree = get_max_class_probas(probas_tree)
-
-
-                # probas_perceptron = self.perceptron.predict_proba(unlabeled_x_train)
-                probas_logistic_regression = self.logistic_regression.predict_proba(unlabeled_pool)
-                probas_logistic_regression = get_max_class_probas(probas_logistic_regression)
-
-                probas_generalized_lvq = self.generalized_lvq.predict_proba(unlabeled_pool)
-
-
-                probas = np.vstack((probas, probas_svm))
-                probas = np.vstack((probas, probas_tree))
-                probas = np.vstack((probas, probas_logistic_regression))
-                probas = np.vstack((probas, probas_generalized_lvq))
-
-
-                min_i = np.argsort(probas.sum(axis=0))
-
-
-
+                prediction_svm = self.svm.predict(unlabeled_pool)
+                prediction_tree = self.tree.predict(unlabeled_pool)
+                prediction_logistic_regression = self.logistic_regression.predict(unlabeled_pool)
+                preds = np.vstack((prediction_svm,prediction_tree,prediction_logistic_regression)).transpose()
+                scores = self._vote_disagreement(preds)
+                max_i = np.argsort(scores)[::-1]
             except:
                 return None
-            return min_i[:batch_size]
+            return max_i[:batch_size]
+
+
+        def query_by_kldivergence(self, unlabeled_pool,batch_size):
+            try:
+                probas_svm = self.svm.predict_proba(unlabeled_pool)
+                probas_tree = self.tree.predict_proba(unlabeled_pool)
+                # probas_perceptron = self.perceptron.predict_proba(unlabeled_x_train)
+                probas_logistic_regression = self.logistic_regression.predict_proba(unlabeled_pool)
+                probas_logistic_regression[np.isnan(probas_logistic_regression)] = probas_logistic_regression.shape[1] / 3
+
+                # probas_generalized_lvq = self.generalized_lvq.predict_proba(unlabeled_pool)
+
+                data = np.stack((probas_svm, probas_tree, probas_logistic_regression)).transpose(1, 0, 2)
+                scores = self._kl_divergence_disagreement(data)
+                max_i = np.argsort(scores)[::-1]
+            except:
+                return None
+            return max_i[:batch_size]
 
     if not hasattr(obj,'qbc'):
         obj.qbc = qbc()
