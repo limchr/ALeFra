@@ -28,6 +28,13 @@
 #
 
 
+import importlib
+alefra_spec = importlib.util.find_spec("ALeFra")
+if not alefra_spec is not None: # alefra was installed using setup tools
+    import sys
+    sys.path.append('/media/compute/homes/climberg/src/python/alefra')
+
+
 import numpy as np
 import random
 from ALeFra.helper import convert_probas_to_max_cls_proba
@@ -35,7 +42,6 @@ import ALeFra.helper as helper
 import numpy as np
 import random
 
-from PracticalMachineLearning.glvq import glvq
 from common.classification import get_max_class_probas
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
