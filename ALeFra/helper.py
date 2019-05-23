@@ -33,7 +33,6 @@ from shutil import rmtree
 import numpy as np
 from math import sqrt,floor,ceil
 import scipy
-from skimage.transform import resize,rotate
 from PIL import ImageFont, Image, ImageDraw
 from scipy.interpolate import interp1d
 
@@ -147,6 +146,7 @@ def convert_to_float_images(imgs):
     return (imgs-min)/(max-min)
 
 def hstack_images(*imgs, scale_to_max_height=True):
+    from skimage.transform import resize, rotate
     shapes = np.array([i.shape for i in imgs])
     maxh, maxw, maxc = shapes.max(axis=0)
     if scale_to_max_height:
