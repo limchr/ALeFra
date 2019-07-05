@@ -153,6 +153,14 @@ class active_classifier:
         self.unlabeled_i_ = np.array(range(len(x)),dtype=np.int32)
 
 
+    def append_samples(self,x,y):
+        """Append samples to the unlabeled pool for incremental learning"""
+        former_length = len(self.y_)
+        self.x_ = np.vstack((self.x_, x))
+        self.y_ = np.hstack((self.y_, y))
+        self.unlabeled_i_ = np.hstack((self.unlabeled_i_, list(range(former_length, len(self.y_)))))
+
+
     def set_test_set_(self,x_test,y_test,img_test = None):
         """Sets a test set for validating the active learning training procedure. This is necessary in order to call eval_test_set.
         """
