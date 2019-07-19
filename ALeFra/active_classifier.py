@@ -129,6 +129,7 @@ class active_classifier:
         self.DIR_LABEL_CHANGE = os.path.join(self.DIR_EXPORT,'log','label_change')
         self.DIR_COLLAGE = os.path.join(self.DIR_EXPORT,'log','collage')
         self.DIR_FEATURE_VISUALIZATION = os.path.join(self.DIR_EXPORT,'log','feature_visualization')
+        self.DIR_TRAIN_CLASSIFY = os.path.join(self.DIR_EXPORT,'log','train_classify')
 
 
         setup_clean_directory(self.DIR_EXPORT)
@@ -138,8 +139,10 @@ class active_classifier:
         setup_clean_directory(self.DIR_LABEL_CHANGE)
         setup_clean_directory(self.DIR_COLLAGE)
         setup_clean_directory(self.DIR_FEATURE_VISUALIZATION)
+        setup_clean_directory(self.DIR_TRAIN_CLASSIFY)
 
-        self.set_test_set_(x_test,y_test,img_test)
+        if x_test is not None:
+            self.set_test_set_(x_test,y_test,img_test)
 
     def init_samples_(self,x,y,imgs):
         """Sets up the training samples and initializes the labeled / unlabeled pool"""
@@ -394,6 +397,21 @@ class active_classifier:
             pass
 
         plt.savefig(os.path.join(self.DIR_FEATURE_VISUALIZATION, str(self.epoch_counter_).zfill(8) + '.png'), format='png')
+
+
+
+
+        plt.cla()
+        plt.ion()
+        ax = plt.gca()
+
+        predicted_x = np.array(self.predict_(self.cls, self.x_))
+
+        for x,y,predicted in zip(self.x_, self.y_, predicted_x):
+            plt.scatter(x[0], x[1], marker=markers[y], color=colors[predicted])  # some_colors[int(y)]
+
+        plt.savefig(os.path.join(self.DIR_TRAIN_CLASSIFY, str(self.epoch_counter_).zfill(8) + '.png'), format='png')
+
 
     def save_scores_plot(self):
         """Saves a score plot (test and train accuracies).
