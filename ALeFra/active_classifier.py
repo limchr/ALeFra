@@ -407,7 +407,10 @@ class active_classifier:
 
         predicted_x = np.array(self.predict_(self.cls, self.x_))
 
-        for x,y,predicted in zip(self.x_, self.y_, predicted_x):
+        from common.classification import get_numerical_classes
+        predicted_x_num = get_numerical_classes(predicted_x)
+
+        for x,y,predicted in zip(self.x_, self.y_, predicted_x_num):
             plt.scatter(x[0], x[1], marker=markers[y], color=colors[predicted])  # some_colors[int(y)]
 
         plt.savefig(os.path.join(self.DIR_TRAIN_CLASSIFY, str(self.epoch_counter_).zfill(8) + '.png'), format='png')
