@@ -48,6 +48,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import SGDClassifier
 import math
 
+import logging
+
 def strategy_query_random(obj, batch_size):
     return random.sample(range(len(obj.unlabeled_i_)), batch_size)
 
@@ -69,6 +71,59 @@ def strategy_query_least_confident(obj, batch_size):
     else:
         inds = np.argsort(pred)[:batch_size]
         return inds
+
+def strategy_query_highest_entropy(obj, batch_size):
+    """active querying wich takes the batch_size highest entropy samples. The passed probability is evaluated with the
+    *predict_proba* callback, which was passed to *__init__*.
+    """
+    try:
+        pred = obj.exec_cls_fun(obj.predict_proba_, obj.get_unlabeled_x())
+    except:
+        print('can not predict probability: query randomly')
+        return strategy_query_random(obj, batch_size)
+
+    from math import log
+    def discrete_entropy(a):
+        return -1 * sum([x*log(x) for x in a])
+
+    if np.array(pred).all() == 0:
+        print('can not predict probabilities, it seems there was something wrong: query randomly')
+        return strategy_query_random(obj, batch_size)
+    else:
+        entropies = []
+        for p in pred:
+            entropies.append(discrete_entropy(p))
+
+        inds = np.argsort(entropies)[-batch_size:]
+        return inds
+
+
+def strategy_query_best_vs_second_best(obj, batch_size):
+    """active querying wich takes the batch_size most uncertain samples regards to their most certain class minus second most certain class. The passed probability is evaluated with the
+    *predict_proba* callback, which was passed to *__init__*.
+    """
+    try:
+        pred = obj.exec_cls_fun(obj.predict_proba_, obj.get_unlabeled_x())
+    except:
+        logging.info('can not predict_proba: query randomly')
+        return strategy_query_random(obj, batch_size)
+
+
+    if np.array(pred).all() == 0:
+        logging.info('all probas are zero: query randomly')
+        return strategy_query_random(obj, batch_size)
+    else:
+        sort_i = np.argsort(pred, axis=1)
+        #max_i = max(sort_i[0])
+        bvsbs = []
+        for i in range(len(sort_i)):
+            c = sort_i[i]
+            bvsb = pred[i][c[-1]] - pred[i][c[-2]]
+            bvsbs.append(bvsb)
+
+        inds = np.argsort(bvsbs)[:batch_size]
+        return inds
+
 
 def strategy_query_least_margin(obj, batch_size):
     # todo

@@ -30,9 +30,11 @@
 
 import importlib
 alefra_spec = importlib.util.find_spec("ALeFra")
-if not alefra_spec is not None: # alefra was installed using setup tools
+if alefra_spec is None: # alefra was installed using setup tools
+    from pathlib import Path
+    import_path = Path(__file__).parent.parent.__str__()
     import sys
-    sys.path.append('/media/compute/homes/climberg/src/python/alefra')
+    sys.path.append(import_path)
 
 
 
@@ -58,7 +60,7 @@ class active_classifier:
                  predict_method=None,
                  predict_proba_method=None,
                  score_method=None,
-                 incremtenal_trainable=True,
+                 incremental_trainable=True,
                  classifier_args=(),
                  classifier_kwargs=dict(),
                  fit_args=(),
@@ -95,7 +97,7 @@ class active_classifier:
         self.predict_proba_ = predict_proba_method if predict_proba_method is not None else self.classifier_.predict_proba
         self.score_ = score_method # if score_method is not None else None
 
-        self.incremental_trainable = incremtenal_trainable
+        self.incremental_trainable = incremental_trainable
 
         self.epoch_counter_ = 0
 
